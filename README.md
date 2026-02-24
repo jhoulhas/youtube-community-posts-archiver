@@ -10,7 +10,7 @@ Node.js script to archive YouTube Community posts via YouTube's internal `youtub
 
 ---
 ### License
-The Unlicensed
+The Unlicense
 
 
 ---
@@ -37,9 +37,8 @@ node yt-ar.js UCJEER74X9kBenMT_x9iK9Mw --post-url "https://www.youtube.com/post/
 node yt-ar.js UC... --root ./archive --limit 100 --delay-pages 1000 --skip-media --verbose
 ```
 
----
-
-> **Info** The API only able to return latest 200 posts. To get past that you need to know and pass the postId itself.
+> [!NOTE]
+> The API only able to return latest 200 posts. To get past that you need to know and pass the postId itself.
 
 ---
 
