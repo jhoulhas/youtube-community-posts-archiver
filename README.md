@@ -242,4 +242,4 @@ Example:
 
 into
 
-> https://yt3.ggpht.com/xzS6MXQkvO_R0iWFj2YeGiuOEPyqOIOdRFRgbEiVZvE17sYuFa0YqvEXZ6Vh2kx316qDJInIYbK7GQ=s640-c-fcrop64=1,1fed0000dffaffff-rw-nd-v1
+> https://yt3.ggpht.com/xzS6MXQkvO_R0iWFj2YeGiuOEPyqOIOdRFRgbEiVZvE17sYuFa0YqvEXZ6Vh2kx316qDJInIYbK7GQ=s0
