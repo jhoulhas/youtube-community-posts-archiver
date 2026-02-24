@@ -9,8 +9,7 @@
 // =============================================================================
 
 
-// version: 0.0.0.1 - 2026/02/24
-
+// version: 0.0.0.2 - 2026/02/25
 "use strict";
 const fs   = require("fs");
 const path = require("path");
@@ -237,9 +236,7 @@ async function ytPost(body) {
 function ytOriginal(rawUrl) {
     if (!rawUrl) return null;
     const u = rawUrl.startsWith("//") ? "https:" + rawUrl : rawUrl;
-    return u
-        .replace(/=s\d+[^"'\s]*$/, "=s0")
-        .replace(/=w\d+-h\d+[^"'\s]*$/, "=s0");
+    return u.replace(/=(s|w|h)\d+[^"'\s]*$/, "=s0");
 }
 
 function getExtFromMimeType(mimeType) {
@@ -307,7 +304,7 @@ function parsePostRenderer(r) {
         postId:        r.postId,
         text:          text,
         authorText:    r.authorText?.runs?.[0]?.text || null,
-        authorHandle:  canonicalBase,
+        authorHandle:  canonicalBase ? canonicalBase.replace(/^\/?@/, "").trim() : null,
         authorId:      r.authorEndpoint?.browseEndpoint?.browseId || null,
         publishedText: r.publishedTimeText?.runs?.[0]?.text || r.publishedTimeText?.simpleText || null,
         publishDate:   null,
@@ -343,8 +340,24 @@ function mergeDetail(post, resp) {
             post.channelTitle = (typeof meta.title === "string" && meta.title.trim()) || null;
         }
 
-        if (!post.authorHandle && meta.vanityUrl) {
-             post.authorHandle = meta.vanityUrl.replace(/^\/?@/, "").trim();
+        if (!post.channelHandle) {
+            // Source 1: microformat author URL (e.g. "https://www.youtube.com/@S1EOL2A")
+            const mfAuthorUrl = resp?.microformat?.microformatDataRenderer
+                ?.postDetails?.discussionForumPosting?.author?.url || null;
+            const fromMicroformat = mfAuthorUrl
+                ? (mfAuthorUrl.match(/\/@?([^/?#]+)$/)?.[1] || null)
+                : null;
+
+            // Source 2: canonicalBaseUrl already parsed into post.authorHandle
+            const fromCanonical = post.authorHandle || null;
+
+            // Source 3: vanityUrl from channel metadata (e.g. "/@S1EOL2A")
+            const fromVanity = meta.vanityUrl
+                ? meta.vanityUrl.replace(/^\/?@/, "").trim() || null
+                : null;
+
+            post.channelHandle = fromMicroformat || fromCanonical || fromVanity || null;
+            log("debug", `  channelHandle resolved: mf=${fromMicroformat} canonical=${fromCanonical} vanity=${fromVanity} -> ${post.channelHandle}`);
         }
     }
 }
@@ -560,7 +573,7 @@ function buildCleanRecord(post, channelTitle, channelHandle) {
         likeCount:     post.likeCount     || null,
         author: {
             name:   post.authorText   || null,
-            handle: post.authorHandle || null,
+            handle: post.authorHandle ? `@${post.authorHandle}` : null,
             id:     post.authorId     || null,
         },
         images:      post.images      || [],
@@ -681,13 +694,8 @@ async function runSinglePost(baseRoot) {
 
         if (!post) throw new Error("Could not parse post from detail response.");
 
-        const meta = resp?.metadata?.channelMetadataRenderer;
-        if (meta) {
-            channelTitle = (typeof meta.title === "string" && meta.title.trim()) || null;
-            if (meta.vanityUrl) {
-                channelHandle = meta.vanityUrl.replace(/^\/?@/, "").trim();
-            }
-        }
+        channelTitle  = post.channelTitle  || null;
+        channelHandle = post.channelHandle || null;
     } catch (e) {
         detailError = e.message;
         log("error", `  Post detail fetch failed: ${e.message}`);
@@ -817,7 +825,6 @@ async function runBulk(baseRoot, channelTitle, channelHandle, firstPage, firstTo
     log("nl");
     log("info", `Phase 3 of 3  --  Saving to disk`);
 
-    //for (const post of unique) {
     for (let i = 0; i < unique.length; i++) {
         const post = unique[i];
         if (post._skipReason === "already archived") {
@@ -830,8 +837,11 @@ async function runBulk(baseRoot, channelTitle, channelHandle, firstPage, firstTo
 
         log("info", `  [${post.postId}]  ${dateDisplay}`);
 
+        const resolvedHandle = post.channelHandle || channelHandle;
+        const resolvedTitle  = post.channelTitle  || channelTitle;
+
         try {
-            const saved = await savePost(post, baseRoot, channelTitle, channelHandle);
+            const saved = await savePost(post, baseRoot, resolvedTitle, resolvedHandle);
             if (saved) {
                 markSaved(CHANNEL_ID, post.postId);
                 stats.saved++;
