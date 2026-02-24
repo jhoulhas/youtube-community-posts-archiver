@@ -38,7 +38,8 @@ node yt-ar.js UC... --root ./archive --limit 100 --delay-pages 1000 --skip-media
 ```
 
 > [!NOTE]
-> The API only able to return latest 200 posts. To get past that you need to know and pass the postId itself.
+> The API only able to return latest 200 posts. To get past that you need to know and pass the postId itself.  
+> Poll post only retrieves relative total votes. You need to be logged-in to get it's actual values. This script does not support cookie passing for that.
 
 ---
 
@@ -170,9 +171,6 @@ archive/youtube/
 }
 
 ```
-
-> [!NOTE]
-> Poll post only retrieves relative total votes. You need to be logged-in to get it's actual values. This script does not support cookie passing.
 
 ---
 
