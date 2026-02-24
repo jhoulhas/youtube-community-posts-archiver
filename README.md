@@ -171,6 +171,9 @@ archive/youtube/
 
 ```
 
+> [!NOTE]
+> Poll post only retrieves relative total votes. You need to be logged-in to get it's actual values. This script does not support cookie passing.
+
 ---
 
 ### Landing / Initial Posts Fetch
@@ -215,7 +218,10 @@ POST https://www.youtube.com/youtubei/v1/browse?prettyPrint=false
 ---
 
 ### Single Post Detail Fetch
-Get full metadata for a specific post (includes `publishDate` from `microformat`that is missing from Posts page (that have only arbitary `X days ago` date)).
+Get full metadata for a specific post.
+
+> This includes essential post creation timestamp `publishDate` from `microformat`that is missing from posts page.  
+> Posts page only have arbitary `X days ago` date.
 
 ```diff
 POST https://www.youtube.com/youtubei/v1/browse?prettyPrint=false
